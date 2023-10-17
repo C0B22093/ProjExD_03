@@ -7,7 +7,7 @@ import pygame as pg
 
 WIDTH = 1600  # ゲームウィンドウの幅
 HEIGHT = 900  # ゲームウィンドウの高さ
-NUM_OF_BOMBS = 5 # 爆弾の数
+NUM_OF_BOMBS = 2 # 爆弾の数
 
 
 def check_bound(obj_rct: pg.Rect) -> tuple[bool, bool]:
@@ -139,6 +139,38 @@ class Bomb:
             self.vy *= -1
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
+        
+
+class Explosion:
+    """"
+    爆発に関するクラス
+    """
+    def __init__(self, bomb: Bomb, life: int):
+        """
+        ex03/fig/explosion.gifと上下左右にflip したものを画像リストに格納
+        爆発した爆弾のrct.center に基づき，生成場所を決定
+        表示時間（爆発時間）life を設定
+        """
+        self.bomb = bomb
+        self.ep_img = pg.image.load("ex03/fig/explosion.gif")
+        self.ep_lst = [
+                self.ep_img,
+                pg.transform.flip(self.ep_img, True, True),
+                pg.transform.flip(self.ep_img, True, False),
+                pg.transform.flip(self.ep_img, False, True),
+                pg.transform.flip(self.ep_img, False, False)
+        ]
+        self.genloc = self.ep_img.get_rect() # 爆発した爆弾の生成場所を決定
+        self.genloc.center = bomb.rct.center
+        self.life = life # 爆発表示時間の設定
+        
+    def update(self, screen: pg.Surface):
+        """"
+        •爆発経過時間life を１減算
+        •爆発経過時間life の値に応じて，画像リストを交互に切り替えて爆発を演出
+        """
+        self.life -= 1
+        screen.blit(self.ep_img, self.genloc)
 
 
 def main():
@@ -148,6 +180,7 @@ def main():
     bird = Bird(3, (900, 400))
     bombs = [Bomb() for _ in range(NUM_OF_BOMBS)]
     beam = None
+    explosion_lst = list()
 
     clock = pg.time.Clock()
     tmr = 0
@@ -176,9 +209,15 @@ def main():
                     # 撃墜＝Noneにする
                     beam = None
                     bombs[i] = None
+                    
+                    explosion_lst.append(Explosion(bomb, 100))
+                    # Explosion.update()
+                        
                     bird.change_img(6, screen) # 撃墜したら喜ぶ画像に変更
                     pg.display.update()
-            bombs = [bomb for bomb in bombs if bomb is not None]
+                    
+        bombs = [bomb for bomb in bombs if bomb is not None]
+        explosions = [epl for epl in explosion_lst if epl.life > 0]
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
@@ -186,6 +225,8 @@ def main():
             bomb.update(screen)
         if beam is not None:
             beam.update(screen)
+        for epl in explosions:
+            epl.update(screen)    
         pg.display.update()
         tmr += 1
         clock.tick(50)
