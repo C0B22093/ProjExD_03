@@ -171,7 +171,15 @@ class Explosion:
         """
         self.life -= 1
         screen.blit(self.ep_img, self.genloc)
-
+        
+class Score:
+    """"
+    スコアを表示させるクラス
+    """
+    def __init__(self, text):
+        self.font = pg.font.SysFont("hgp創英角ポップ体", 30)
+        self.img = self.font.render(f"{text}", 0, (0, 0, 255))
+        
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
